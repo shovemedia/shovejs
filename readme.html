@@ -1,0 +1,552 @@
+<html>
+<head>
+	<style>
+	body {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-size: 16px;
+	color: #4f4f4f;
+}
+	</style>
+</head>
+
+
+<body>
+<h6>version 0.1</h6>
+<h1>ShoveJS</h1>
+
+
+<p>...is a JavaScript microframework (lightly) inspired by RobotLegs (ActionScript 3) and its default dependency injection library SwiftSuspenders. It's meant to provide implementations of common patterns needed while developing web apps. If you don't <em>like</em> a specific piece, you should be able to swap it out with another implementation, and if you don't <em>need</em> a piece, you should be able to omit it.</p>
+
+<p>The overall goal is to make bootstrapping a modular application a little more sane. ShoveJS encourages modularity, flexibility, and loose-coupling.</p>
+
+<p>A few of the provided features:
+<ul>
+	<li>Dependency Injection</li>
+	<li>Automatic view creation / mediation</li>
+	<li>Service Initialization</li>
+	<li>Serialization / Deserialization (JSON) of complex types (maintaining class/prototype)</li>
+</ul>
+</p>
+
+<p>It currently depends on the following 3rd party libraries:
+<ul>
+	<li>requirejs</li>
+	<li>js signals</li>
+	<li>Q - Promises - required for (de)serialization)</li>
+	<li>json2 - required for (de)serialization support in older browsers</li>
+</ul>
+</p>
+
+<p>
+Some examples require additional 3rd party libraries, but they're not otherwise required:
+<ul>
+	<li>jQuery</li>
+</ul>
+</p>
+
+<h1>Application Bootstrapping</h1>
+<p>An application's HTML typically includes requirejs and creates a new instance of Main in the callback (which is passed an HTMLElement to serve as the root view).</p>
+
+<p>
+The application main will then:
+<ul>
+	<li>include a basket of classes (via requirejs)</li>
+	<li>register the Model classes</li>
+	<li>register View classes for Model classes</li>
+	<li>register Meditor classes for View classes</li>
+	<li>register Factory classes for Model classes</li>
+	<li>register Service classes</li>
+	<li>map Application signals to CommandClasses</li>
+	<li>Context View???</li>
+	<li>Get view(s) for the application context and append(s) them to the root view.</li>
+</ul>
+</p>
+
+
+<h1>Dependency Injection</h1>
+
+<h2>Defining Injectable Fields for a Class</h2>
+<p>Each class that will have properties injected, defines....</p>
+
+<pre>
+	SomeClass.injectableFields = {fieldName:FieldClass, fieldName2:FieldClass};
+</pre>
+
+<p>
+In most cases, your classes will have their injectable fields mapped automatically. This is the case for:
+<ul>
+	<li>view classes</li> 
+	<li>mediator classes</li>
+	<li>command classes</li>
+</ul>
+</p>
+
+<p>
+Manually register a class to have its injectable fields mapped:
+<pre>
+	context.injector.mapInjectionFields(SomeClass);
+</pre>
+</p>
+
+<h2>Defining Injection Values</h2>
+<p>
+Values are mapped to injectable fields:
+</p>
+<pre>
+	context.injector.mapValue = (SomeClass, "injectionField", injectionValue)
+</pre>
+
+
+<p>The injectionValue will be mapped to any injectable field of type SomeClass matching "injectionField".</p>
+
+<strong>NOTE:</strong> the type of class being injected into does not matter. More on child Injectors later.
+
+
+<h2>Injection Life-cycle</h2>
+<p>The above set-up must be in place first. Afterwards:</p>
+<pre>
+	context.injector.injectInto(someInstance);
+</pre>
+
+
+
+<h1>Serialization / Deserialization</h1>
+
+<h2>Register Model Class</h2>
+<p>ShoveJS makes no assumptions about your model classes. It should not be necessary to store unique ids, (de)serialization logic, etc in your models. ShoveJS promotes a model containing nothing but data and (eg update) signals.</p>
+
+<p>Any model (and the models it uses via composition) need to be registered in the class registry:
+<pre>
+	context.registerClass(SomeModelClass);
+</pre>
+</p>
+
+<p>This feature relies on a ClassRegistry which maps Classes to an id. The proviced ClassRegistry implementation will call toString as a static method of the registering Class if an id is not provided.</p>
+
+<p>
+For example:
+<pre>
+	context.registerClass(SomeClass.toString(), SomeClass);
+</pre>
+would be equivalent to:
+<pre>
+	context.registerClass(SomeClass);
+</pre>
+</p>
+
+<h2>Register Model Factories</h2>
+<pre>
+	var someModelFactoryInstance = new SomeModelFactory();
+	context.factoryRegistry.set(SomeModel, someModelFactoryInstance);
+</pre>
+
+<h2>Factory Interface</h2>
+
+<ul>
+	<li>Factory.toString() -- returns a unique id for this Factory class</li>
+	<li>Factory.toJSON() -- returns a JSON-ready serialization object</li>
+	<li>Factory.fromJSON -- returns an object with fully classed and cross-referenced objects</li>
+</ul>
+
+<h2>Factory Patterns</h2>
+<h3>toJSON</h3>
+<p>
+The Factory is passed the instance to be serialized:
+<pre>
+	DictionaryFactory.prototype.toJSON = function (dictionary) { /* */ };
+</pre>
+</p>
+
+<p>
+A typical toJSON implementation starts by creating an empty object:
+<pre>
+	var jsonObj = {};
+</pre>
+</p>
+
+<p>Fields containing only Numbers &amp; Strings (or Arrays/Objects containing only Numbers, Strings, Arrays, and Objects) can be serialized directly:
+<pre>
+	jsonObj.field = model.field;
+</pre>
+</p>
+
+<p>The JSONService exposes a method toJSONref which can be utilized by factory.toJSON methods to convert composed objects into "JSON references" pointing to registered Objects. Objects / values for which no entry is found are returned unchanged. //????
+</p>
+
+<p>
+For example, the DictionaryFactory:
+<pre>
+	jsonObj.keys = [];
+	for (var i=0, len=dictionary.keys.length; i&lt;len; i++)
+	{
+		jsonObj.keys.push( this.jsonService.toJSONref(dictionary.keys[i]) );
+	}
+</pre>	
+</p>
+
+<p>A new keys field is created on the Dictionary's JSON object. For each key, a value is placed in that Array containing a special object described in the JSON Format section below.</p>
+
+<h3>fromJSON</h3>
+
+<p>
+A factory is passed the jsonObject to be de-serialized:
+<pre>
+	DictionaryFactory.prototype.toJSON = function (dictionary) { /* */ };
+</pre>
+</p>
+
+<p>
+The typical fromJSON implementation starts by creating an empty model:
+<pre>
+	var dictionary = new Dictionary();
+</pre>
+</p>
+
+<p>
+Fields containing only Numbers &amp; Strings (or Arrays/Objects containing only Numbers, Strings, Arrays, and Objects) can be deserialized directly:
+<pre>
+	model.field = jsonObj.field;
+</pre>
+</p>
+
+<p>
+JSONService uses the Q library's Promise implementation to provide instance references:
+<pre>
+	jsonObj.referencedObject.promise.then( function (referencedObject) {model.referencedObject = referencedObject;} );
+</pre>
+</p>
+
+<p>	
+If your model needs to do some processing once the value is available use a setter function:
+<pre>
+	jsonObj.normalizedPoint.promise.then ( function (point) {model.setNormalizedPoint(point); } );
+</pre>	
+</p>
+
+<p>
+Writing deserialization promise logic is by far the trickiest part of using the framework. (It's worth it!) The included Factory classes contain several patterns worth using as starting points.
+</p>
+
+<h2>JSON Format</h2>
+<p>
+The JSON returned from toJSON will always contain two fields:
+<ul>
+	<li>meta</li>
+	<li>data</li>
+</ul>
+or:
+<pre>
+	{
+		"meta":{ /* */ },
+		"data":{ /* */ }
+	}
+</pre>
+</p>
+
+<p>
+The meta field contains a hash of object references:
+	<pre>
+	"meta":
+	{
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:0": {},
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:1": {}
+	}
+	</pre>
+	</p>
+
+	<p>
+	Each of the values contains two fields:
+	<ul>
+		<li>type</li>
+		<li>value</li>
+	</ul>
+	</p>
+
+	<p>
+	If any property within value's tree is itself a registered object, it will be converted to a JSON reference of the form:
+	<pre>{"$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:1"}:</pre>
+	</p>
+
+	<p>
+	The same reference objects are used in the data branch of the object tree. When sending the JSON string to the server the resulting JSON might look like:
+	<pre>
+	{"meta" :{
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:0": {
+	    "type": "[Some Class]",
+	    "value": {
+	      "field1": [
+	        {
+	          "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:1"
+	        }
+	      ]
+	    }
+	  },
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:1": {
+	    "type": "[Some Class]",
+	    "value": {
+	      "field1": [
+	        {
+	          "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:0"
+	        }
+	      ],
+	      "field2": {
+	        "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:7"
+	      }
+	    }
+	  },
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:7": {
+	    "type": "[Dictionary Class]",
+	    "value": {
+	      "keys": [
+	        {
+	          "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:11"
+	        }
+	      ],
+	      "values": [
+	        {
+	          "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:12"
+	        }
+	      ]
+	    }
+	  },
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:11": {
+	    "type": "[Data1 Class]",
+	    "value": 123
+	  },
+	  "bfb37975-148e-5f87-6f12-f4a15dbf3b34:12": {
+	    "type": "[Data2 Class]",
+	    "value": "xxx"
+	  }
+	}, "data" :{
+	  "a": {
+	    "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:0"
+	  },
+	  "a": {
+	    "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:1"
+	  },
+	  "c": {
+	    "$ref": "bfb37975-148e-5f87-6f12-f4a15dbf3b34:2"
+	  }
+	}} 
+</pre>
+</p>
+
+<p>
+When deserializing, the returned object will match the structure defined in the data field.
+</p>
+
+
+<h3>About the ObjectRegistry</h3>
+<p>
+An ObjectRegistry maps a unique object id to an instance. Usually, this is handled for automatically.
+</p>
+
+<p>
+Manually:
+<pre>
+	objectRegistry.registerModel(id, instance);
+</pre>
+</p>
+
+<p>
+The JSONService has dependencies mapped for injection:
+<ul>
+	<li>context: Context - provides access to class &amp; factory mappings</li>
+	<li>classRegistry: ClassRegistry - maps unique class ids to classes</li>
+	<li>objectRegistry: ObjectRegistry - maps unique ids to instances</li>
+	<li>objectIdentityService: ObjectIdentityService - unique id generator</li>
+</ul>
+</p>
+
+<p>
+These are mapped for you. 
+</p>
+
+<p>
+The JSONService handles calling factory.toJSON and factory.fromJSON for each object type referenced while walking data objects and json objects respectively &amp; recursively.
+</p>
+
+
+
+
+<h1>Automatic View Creation / Mediation</h1>
+
+<h2>Register Model Classes</h2>
+<p>
+	(See above)
+</p>
+
+<h2>Map Model Classes to View Classes</h2>
+<p>
+<pre>
+	context.mapModelView(Controls,		ControlsView);
+</pre>
+</p>
+
+<p>
+an additional parameter allows multiple views per model class
+<pre>
+	context.mapModelView(Controls,		ControlsView,	'map');
+</pre>
+</p>
+
+<h2>Register View Factory Classes</h2>
+<p>
+(See above)
+<pre>
+	context.mapViewMediator(ControlsView,		ControlsCommandMap);
+</pre>
+</p>
+
+<h2>Mediator Classes</h2>
+<p>
+Mediator instances are automatically created and  linked to views when views are created. They're responsible for linking UI-events to Command classes. Signals published by the View class are automatically mapped to the Mediator's injection fields of the same name.
+</p>
+
+<pre>
+	ControlsCommandMap.injectionFields = {
+		context:Context, 
+		loadRequested:signals.Signal,
+		saveRequested:signals.Signal
+	};
+</pre>
+
+<h2>View Classes</h2>
+
+<p>
+Views have:
+<ul>
+	<li>an "on" field containing named UI signals to publish for automatic mediation</li> 
+	<li>an observe method which will be passed the model instance to view (READ ONLY!)</li>
+</ul>
+</p>
+
+<p>
+The Mediator's map/unmap methods link/unlink these signals to Command classes.
+</p>
+
+<pre>
+	ControlsCommandMap.prototype.map = function () {
+		this.context.mapSignal(this.loadRequested,	LoadNewFeatureDataCommand,	this);
+		this.context.mapSignal(this.saveRequested,	SaveZoneDataCommand,	 	this);
+	}
+
+	ControlsCommandMap.prototype.unmap = function () {
+		this.context.unmapSignal(this.loadRequested,	LoadNewFeatureDataCommand,	this);
+		this.context.unmapSignal(this.saveRequested,	SaveZoneDataCommand,		this);
+	}
+</pre>
+
+
+<h2>Command Interface</h2>
+<p>
+Commands:
+<ul>
+	<li>have an execute method</li>
+	<li>have their injection fields automatically populated by</li>
+		<ul>
+			<li>UI signal data payload</li>
+			<li>The view's controllerData (context.registerView) -- typically, this contains the model the view is observing</li>
+		</ul>
+</ul>
+</p>
+
+
+<h2>Creating / Getting a View</h2>
+
+<pre>
+	var controlsView = context.getViewByModel(controls);
+	var controllerData = {controls:controls};
+	context.registerView(controlsView, controllerData);
+</pre>
+
+<p>
+If you're using the multi-views per model class case above:
+<pre>
+	var controlsView = context.getViewByModel(controls, 'map');
+</pre>
+</p>
+
+
+
+<h1>Service Initialization</h1>
+<h2>Service Interface</h2>
+
+<p>
+Services have:
+<ul>
+	<li>an id to register themselves</li>
+	<li>an optional init method</li>
+</ul>
+</p>
+
+<h2>Service Life-cycle</h2>
+<p>
+When you register a service, the following things happen:
+</p>
+
+<p>
+The service's injectable fields are mapped:
+<pre>
+	context.injector.mapInjectionFields(SomeService);
+</pre>
+</p>
+
+<p>
+The service is registered under its id &amp; class:
+<pre>
+	var someService = new SomeService(); // simplified here
+	context.injector.mapValue(SomeService, 'someService', someService);
+</pre>
+</p>
+
+<p>
+When the context is initialized:
+	<ul>
+		<li>The service has its injectable fields populated:
+<pre>
+	context.injector.injectInto(someService);
+</pre>
+		</li>
+		<li>The service is initialized:
+<pre>
+	featureSelectionService.init();
+</pre>
+		</li>
+	</ul>
+</p>
+
+<h1>Utilities</h1>
+
+<p>
+A few "internals" that might be useful.
+</p>
+
+<h2>Dictionary</h2>
+<p>
+Easily map from any kind of object to any other kind of object. The JavaScript Array/Object classes are limited to Numeric/String keys.
+</p>
+
+<p>
+The Dictionary is used heavily throughout the framework. The implementation could be improved performance-wise, but I've left it in a more readable form, during development.
+</p>
+
+<h2>ModelMediator</h2>
+<p>
+<strong>Note:</strong> This is different from the View Mediator pattern discussed above. 
+</p>
+
+<p>
+Pass a model instance to the constructor function. The object you get back will proxy set/get access on the original model object while providing a change handler for each field in the model. In the default implementation, that's every field accessible by for..in
+</p>
+
+<p>
+The change signals are stored in a Dictionary called __on__
+<pre>
+	var mediator = new ModelMediator(modelInstance);
+	mediator.__on__.someField.add(function () { console.log("someField changed!") })
+</pre>
+</p>
+
+</body>
+</html>
