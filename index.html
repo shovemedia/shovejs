@@ -4,11 +4,19 @@
   <head>
     <meta charset='utf-8' />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Shovejs : a micro-architecture for JavaScript." />
+    <meta name="description" content="shoveJS : a micro-architecture for JavaScript." />
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    <title>Shovejs</title>
+    <style>
+    body {
+      font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+      font-size: 16px;
+      color: #4f4f4f;
+    }
+    </style>
+
+    <title>shoveJS</title>
   </head>
 
   <body>
@@ -18,7 +26,7 @@
         <header class="inner">
           <a id="forkme_banner" href="https://github.com/shovemedia/shovejs">View on GitHub</a>
 
-          <h1 id="project_title">Shovejs</h1>
+          <h1 id="project_title">shoveJS</h1>
           <h2 id="project_tagline">a micro-architecture for JavaScript.</h2>
 
             <section id="downloads">
@@ -31,23 +39,14 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <p>
-</p>
-    
-    body {
-    font-family: &amp;quot;HelveticaNeue-Light&amp;quot;, &amp;quot;Helvetica Neue Light&amp;quot;, &amp;quot;Helvetica Neue&amp;quot;, Helvetica, Arial, &amp;quot;Lucida Grande&amp;quot;, sans-serif;
-    font-size: 16px;
-    color: #4f4f4f;
-}
-    <p></p>
 
 <h6>version 0.1</h6>
 
-<h1>ShoveJS</h1>
+<h1>shoveJS</h1>
 
 <p>...is a JavaScript microframework (lightly) inspired by RobotLegs (ActionScript 3) and its default dependency injection library SwiftSuspenders. It's meant to provide implementations of common patterns needed while developing web apps. If you don't <em>like</em> a specific piece, you should be able to swap it out with another implementation, and if you don't <em>need</em> a piece, you should be able to omit it.</p>
 
-<p>The overall goal is to make bootstrapping a modular application a little more sane. ShoveJS encourages modularity, flexibility, and loose-coupling.</p>
+<p>The overall goal is to make bootstrapping a modular application a little more sane. shoveJS encourages modularity, flexibility, and loose-coupling.</p>
 
 <p>A few of the provided features:
 </p><ul>
@@ -130,7 +129,7 @@ Values are mapped to injectable fields:
 
 <h2>Register Model Class</h2>
 
-<p>ShoveJS makes no assumptions about your model classes. It should not be necessary to store unique ids, (de)serialization logic, etc in your models. ShoveJS promotes a model containing nothing but data and (eg update) signals.</p>
+<p>shoveJS makes no assumptions about your model classes. It should not be necessary to store unique ids, (de)serialization logic, etc in your models. shoveJS promotes a model containing nothing but data and (eg update) signals.</p>
 
 <p>Any model (and the models it uses via composition) need to be registered in the class registry:
 </p><pre>
@@ -354,7 +353,7 @@ When deserializing, the returned object will match the structure defined in the 
 <h3>About the ObjectRegistry</h3>
 
 <p>
-An ObjectRegistry maps a unique object id to an instance. Usually, this is handled for automatically.
+An ObjectRegistry maps a unique object id to an instance. Usually, this is handled automatically.
 </p>
 
 <p>
@@ -558,7 +557,7 @@ The change signals are stored in a Dictionary called __on__
     <!-- FOOTER  -->
     <div id="footer_wrap" class="outer">
       <footer class="inner">
-        <p class="copyright">Shovejs maintained by <a href="https://github.com/shovemedia">shovemedia</a></p>
+        <p class="copyright">shoveJS maintained by <a href="https://github.com/shovemedia">shovemedia</a></p>
         <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
