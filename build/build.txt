@@ -1,0 +1,15 @@
+
+./shovejs.js
+----------------
+./shovejs/model/Dictionary.js
+./shovejs/model/ClassRegistry.js
+./shovejs/model/ObjectRegistry.js
+./shovejs/Injector.js
+./shovejs/MediatorMap.js
+./shovejs/Context.js
+./shovejs/service/ObjectIdentityService.js
+./shovejs/service/JSONService.js
+./shovejs/model/DictionaryFactory.js
+./shovejs/service/SelectionService.js
+./shovejs/ModelMediator.js
+./shovejs.js

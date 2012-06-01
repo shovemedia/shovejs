@@ -1,0 +1,2 @@
+define(["shovejs/model/ObjectRegistry"],function(d){var a=function(){return((1+Math.random())*65536|0).toString(16).substring(1)},b=function(){this.sesid=a()+a()+"-"+a()+"-"+a()+"-"+a()+"-"+a()+a()+a();this.counter=0};b.injectionFields={objectRegistry:d};b.prototype.generateInstanceId=function(){return this.sesid+":"+this.counter++};b.prototype.get=function(a,b){var c=this.objectRegistry.getId(a);if(c!=null)return c;if(b&&(a instanceof Object||a instanceof Function))c=this.generateInstanceId(),this.objectRegistry.registerModel(c,
+a);return c};return b});

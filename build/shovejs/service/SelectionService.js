@@ -1,0 +1,1 @@
+define(["require","lib/signals"],function(a){var b=a("lib/signals"),a=function(){this.deselectSignal=new b.Signal;this.selectSignal=new b.Signal};a.prototype.select=function(a){a&&this.selectSignal.dispatch({selection:a})};a.prototype.deselect=function(a){this.deselectSignal.dispatch({selection:a})};return a});
